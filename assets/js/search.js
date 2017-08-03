@@ -114,10 +114,10 @@ function search (nodes, value, addHistory) {
   var tasks = findIn(nodes.tasks, safeVal)
 
   // sometimes we need to stop adding to the history if it already exists.
-  if (addHistory !== false) {
+  if (addHistory !== false && location.protocol !== 'file:') {
     // we use this to track searches that are in the history
     searchCount++
-    history.pushState({searchValue: value}, 'Searching for ' + value, '/search.html?q=' + value)
+    history.pushState({searchValue: value}, 'Searching for ' + value, 'search.html?q=' + value)
   }
 
   // add to the results
@@ -205,7 +205,7 @@ export function popstateHandler (event) {
     //       on back after navigating away the page (clicking a result in the search)
     //       there is no original page content i.e. all that was display none is gone
     //       note this doesn't happen in Safari, just FF and Chrome.
-    document.location.reload(true)
+    // document.location.reload(true)
   } else if ('searchValue' in event.originalEvent.state) {
     // when we have a searchValue, show the search but clearly don't push a history state
     var searchValue = event.originalEvent.state.searchValue

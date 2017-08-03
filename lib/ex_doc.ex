@@ -25,7 +25,10 @@ defmodule ExDoc do
 
     defstruct [
       assets: nil,
+      before_closing_head_tag: "",
+      before_closing_body_tag: "",
       canonical: nil,
+      debug: false,
       deps: [],
       extra_section: nil,
       extras: [],
@@ -50,7 +53,10 @@ defmodule ExDoc do
 
      @type t :: %__MODULE__{
        assets: nil | String.t,
+       before_closing_head_tag: String.t,
+       before_closing_body_tag: String.t,
        canonical: nil | String.t,
+       debug: boolean(),
        deps: [{ebin_path :: String.t, doc_url :: String.t}],
        extra_section: nil | String.t,
        extras: list(),

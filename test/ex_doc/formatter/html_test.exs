@@ -20,6 +20,9 @@ defmodule ExDoc.Formatter.HTMLTest do
     File.read!(file)
   end
 
+  @before_closing_head_tag "UNIQUE:<dont-escape>&copy;BEFORE-CLOSING-HEAD-TAG</dont-escape>"
+  @before_closing_body_tag "UNIQUE:<dont-escape>&copyBEFORE-CLOSING-BODY-TAG</dont-escape>"
+
   defp doc_config do
     [project: "Elixir",
      version: "1.0.1",
@@ -29,7 +32,9 @@ defmodule ExDoc.Formatter.HTMLTest do
      source_root: beam_dir(),
      source_beam: beam_dir(),
      logo: "test/fixtures/elixir.png",
-     extras: ["test/fixtures/README.md"]]
+     extras: ["test/fixtures/README.md"],
+     before_closing_head_tag: @before_closing_head_tag,
+     before_closing_body_tag: @before_closing_body_tag]
   end
 
   defp doc_config(config) do
@@ -117,19 +122,24 @@ defmodule ExDoc.Formatter.HTMLTest do
     assert File.regular?("#{output_dir()}/CompiledWithDocs.html")
     assert File.regular?("#{output_dir()}/CompiledWithDocs.Nested.html")
 
+    assert [_] = "#{output_dir()}/dist/app-*.css" |> Path.wildcard
+    assert [_] = "#{output_dir()}/dist/app-*.js" |> Path.wildcard
+    assert [] = "#{output_dir()}/another_dir/dist/app-*.js.map" |> Path.wildcard
+
     content = File.read!("#{output_dir()}/index.html")
     assert content =~ ~r{<meta http-equiv="refresh" content="0; url=api-reference.html">}
   end
 
-  test "run generates in specified output directory and redirect index.html file" do
-    config = doc_config(output: "#{output_dir()}/another_dir", main: "RandomError")
+  test "run generates in specified output directory with redirect index.html file and debug options" do
+    config = doc_config(output: "#{output_dir()}/another_dir", main: "RandomError", debug: true)
     generate_docs(config)
 
     assert File.regular?("#{output_dir()}/another_dir/CompiledWithDocs.html")
     assert File.regular?("#{output_dir()}/another_dir/RandomError.html")
 
-    assert "#{output_dir()}/another_dir/dist/app-*.css" |> Path.wildcard |> File.regular?
-    assert "#{output_dir()}/another_dir/dist/app-*.js" |> Path.wildcard |> File.regular?
+    assert [_] = "#{output_dir()}/another_dir/dist/app-*.css" |> Path.wildcard
+    assert [_] = "#{output_dir()}/another_dir/dist/app-*.js" |> Path.wildcard
+    assert [_] = "#{output_dir()}/another_dir/dist/app-*.js.map" |> Path.wildcard
 
     content = File.read!("#{output_dir()}/another_dir/index.html")
     assert content =~ ~r{<meta http-equiv="refresh" content="0; url=RandomError.html">}
@@ -197,6 +207,23 @@ defmodule ExDoc.Formatter.HTMLTest do
     assert content =~ ~r{<a href="RandomError.html"><code(\sclass="inline")?>RandomError</code>}
     assert content =~ ~r{<a href="CustomBehaviourImpl.html#hello/1"><code(\sclass="inline")?>CustomBehaviourImpl.hello/1</code>}
     assert content =~ ~r{<a href="TypesAndSpecs.Sub.html"><code(\sclass="inline")?>TypesAndSpecs.Sub</code></a>}
+  end
+
+  test "before_closing_*_tags are placed in the right place - api reference file" do
+    generate_docs(doc_config())
+
+    content = File.read!("#{output_dir()}/api-reference.html")
+    assert content =~ ~r[#{@before_closing_head_tag}\s*</head>]
+    assert content =~ ~r[#{@before_closing_body_tag}\s*</body>]
+  end
+
+  test "before_closing_*_tags are placed in the right place - generated pages" do
+    config = doc_config([main: "readme"])
+    generate_docs(config)
+    
+    content = File.read!("#{output_dir()}/readme.html")
+    assert content =~ ~r[#{@before_closing_head_tag}\s*</head>]
+    assert content =~ ~r[#{@before_closing_body_tag}\s*</body>]
   end
 
   test "run generates pages with custom names" do
