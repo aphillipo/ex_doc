@@ -19,7 +19,6 @@ const $input = $('.sidebar-search input')
 const $sidebarItems = $('#full-list li')
 let $results
 let $oldContent
-let searchCount = 0
 
 // Local Methods
 // -------------
@@ -81,18 +80,16 @@ export function findIn (elements, matcher) {
   }).filter(cleaner)
 }
 
-export function getParameterByName (name, url) {
-  if (!url) {
-    url = window.location.href
-  }
+export function getParameterByName (name, defaultValue = null) {
+  const url = window.location.href
   const param = name.replace(/[\[\]]/g, '\\$&')
   const regex = new RegExp('[?&]' + param + '(=([^&#]*)|&|#|$)')
   const results = regex.exec(url)
   if (!results) {
-    return null
+    return defaultValue
   }
   if (!results[2]) {
-    return ''
+    return defaultValue
   }
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
@@ -116,8 +113,8 @@ function search (nodes, value, addHistory) {
   // sometimes we need to stop adding to the history if it already exists.
   if (addHistory !== false && location.protocol !== 'file:') {
     // we use this to track searches that are in the history
-    searchCount++
-    history.pushState({searchValue: value}, 'Searching for ' + value, 'search.html?q=' + value)
+    var searchCount = parseInt(getParameterByName('s') || 0) + 1
+    history.pushState({searchValue: value}, 'Searching for ' + value, 'search.html?q=' + value + '&s=' + searchCount)
   }
 
   // add to the results
@@ -147,7 +144,8 @@ function search (nodes, value, addHistory) {
   $results.find('.close-search').on('click', function (e) {
     e.preventDefault()
     closeResults(e)
-    history.go(-searchCount)
+    let searchCount = parseInt(getParameterByName('s'))
+    history.go(-searchCount) // - go back
   })
 
   // every other link closes the search
@@ -196,10 +194,6 @@ export function start (val, addHistory) {
 }
 
 export function popstateHandler (event) {
-  if (searchCount > 0) {
-    searchCount--
-  }
-
   if (event.originalEvent.state == null) {
     // NOTE: for reasons only known to the browser makers we need to reload here,
     //       on back after navigating away the page (clicking a result in the search)
