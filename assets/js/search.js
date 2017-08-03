@@ -113,7 +113,7 @@ function search (nodes, value, addHistory) {
   // sometimes we need to stop adding to the history if it already exists.
   if (addHistory !== false && location.protocol !== 'file:') {
     // we use this to track searches that are in the history
-    var searchCount = parseInt(getParameterByName('s') || 0) + 1
+    var searchCount = parseInt(getParameterByName('s', 0)) + 1
     history.pushState({searchValue: value}, 'Searching for ' + value, 'search.html?q=' + value + '&s=' + searchCount)
   }
 
